@@ -19,7 +19,7 @@ Clone the repository:
 
 ```bash
 git clone https://github.com/fanukey/discord-lookup.git
-cd topol-lookup
+cd discord-lookup
 ```
 Then, install the required dependencies (if any) and run the server:
 ```bash
