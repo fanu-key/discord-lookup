@@ -18,7 +18,7 @@ To use this tool, you need Go installed on your machine.
 Clone the repository:
 
 ```bash
-git clone https://github.com/yourusername/topol-lookup.git
+git clone https://github.com/fanukey/discord-lookup.git
 cd topol-lookup
 ```
 Then, install the required dependencies (if any) and run the server:
