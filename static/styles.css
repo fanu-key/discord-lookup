@@ -127,3 +127,21 @@ option {
     background-color: var(--discord-dark);
     color: white;
 }
+
+.flags-list {
+    list-style: none;
+    padding: 0;
+}
+
+.flag-item {
+    margin-bottom: 8px;
+}
+
+.flag-icon {
+    margin-right: 8px;
+}
+
+.flag-description {
+    font-weight: bold;
+}
+
