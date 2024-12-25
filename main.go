@@ -235,7 +235,7 @@ func getInfoHandler(w http.ResponseWriter, r *http.Request) {
 func startWebServer() {
 
 	staticFS, _ := fs.Sub(staticFiles, "static")
-	http.Handle("/styles.css", http.FileServer(http.Dir("./static")))
+	http.Handle("/styles.css", http.FileServer(http.FS(staticFS)))
 	http.Handle("/", http.FileServer(http.FS(staticFS)))
 	http.HandleFunc("/getInfo", getInfoHandler)
 
