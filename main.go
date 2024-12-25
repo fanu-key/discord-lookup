@@ -1,8 +1,10 @@
 package main
 
 import (
+	"embed"
 	"encoding/json"
 	"fmt"
+	"io/fs"
 	"log"
 	"net/http"
 	"os/exec"
@@ -12,137 +14,8 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-const styles = `
-    :root {
-        --discord-blue: #5865F2;
-        --discord-dark: #36393f;
-        --discord-darker: #2f3136;
-        --discord-light: #dcddde;
-    }
-    * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
-    body {
-        background-color: var(--discord-dark);
-        color: var(--discord-light);
-        line-height: 1.6;
-    }
-    .container {
-        max-width: 800px;
-        margin: 2rem auto;
-        padding: 2rem;
-        background-color: var(--discord-darker);
-        border-radius: 8px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    }
-    h1 {
-        color: white;
-        text-align: center;
-        margin-bottom: 2rem;
-        font-size: 2.5rem;
-    }
-    .form-group {
-        margin-bottom: 1.5rem;
-    }
-    label {
-        display: block;
-        margin-bottom: 0.5rem;
-        color: var(--discord-light);
-        font-weight: 500;
-    }
-    input[type="text"] {
-        width: 100%;
-        padding: 0.8rem;
-        border: none;
-        border-radius: 4px;
-        background-color: var(--discord-dark);
-        color: white;
-        font-size: 1rem;
-        transition: all 0.3s ease;
-    }
-    input[type="text"]:focus {
-        outline: none;
-        box-shadow: 0 0 0 2px var(--discord-blue);
-    }
-    button {
-        display: block;
-        width: 100%;
-        padding: 1rem;
-        background-color: var(--discord-blue);
-        color: white;
-        border: none;
-        border-radius: 4px;
-        font-size: 1rem;
-        font-weight: 600;
-        cursor: pointer;
-        transition: background-color 0.3s ease;
-    }
-    button:hover {
-        background-color: #4752c4;
-    }
-    .info-table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-top: 1rem;
-        background-color: var(--discord-dark);
-        border-radius: 8px;
-        overflow: hidden;
-    }
-    .info-table tr:hover {
-        background-color: rgba(255, 255, 255, 0.1);
-    }
-    .info-table td {
-        padding: 1rem;
-        border-bottom: 1px solid var(--discord-darker);
-    }
-    .info-table td:first-child {
-        font-weight: 600;
-        width: 30%;
-    }
-    .back-button {
-        display: inline-block;
-        margin-top: 2rem;
-        padding: 0.8rem 1.5rem;
-        background-color: var(--discord-blue);
-        color: white;
-        text-decoration: none;
-        border-radius: 4px;
-        font-weight: 500;
-        transition: background-color 0.3s ease;
-    }
-    .back-button:hover {
-        background-color: #4752c4;
-    }
-
-	select {
-		width: 100%;
-		padding: 0.8rem;
-		border: none;
-		border-radius: 4px;
-		background-color: var(--discord-dark);
-		color: white;
-		font-size: 1rem;
-		transition: all 0.3s ease;
-		appearance: none;
-		background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 4 5"%3E%3Cpath fill="white" d="M2 0L0 2h4zM2 5L0 3h4z"/%3E%3C/svg%3E');
-		background-repeat: no-repeat;
-		background-position: right 0.8rem center;
-		background-size: 0.65em auto;
-	}
-
-	select:focus {
-		outline: none;
-		box-shadow: 0 0 0 2px var(--discord-blue);
-	}
-
-	option {
-		background-color: var(--discord-dark);
-		color: white;
-	}
-`
+//go:embed static/*
+var staticFiles embed.FS
 
 var flags = map[int]string{
 	0:       "■ | Нет значков | 0",
@@ -275,43 +148,6 @@ func generateFlagsHTML(flagValue int) string {
 	return sb.String()
 }
 
-func getIndexTemplate() string {
-	return fmt.Sprintf(`
-		<!DOCTYPE html>
-		<html lang="ru">
-		<head>
-			<meta charset="UTF-8">
-			<meta name="viewport" content="width=device-width, initial-scale=1.0">
-			<title>[TOPOL'] Lookup</title>
-			<style>%s</style>
-		</head>
-		<body>
-			<div class="container">
-				<h1>[TOPOL'] Lookup</h1>
-				<form method="POST" action="/getInfo">
-					<div class="form-group">
-						<label for="token">Токен бота</label>
-						<input type="text" id="token" name="token" placeholder="Введите токен бота Discord" required>
-					</div>
-					<div class="form-group">
-						<label for="lookupType">Выберите тип поиска</label>
-						<select id="lookupType" name="lookupType" required>
-							<option value="1">Поиск по серверу</option>
-							<option value="2">Поиск по пользователю</option>
-						</select>
-					</div>
-					<div class="form-group">
-						<label for="ID">Введите ID</label>
-						<input type="text" id="ID" name="ID" placeholder="Введите ID сервера или пользователя" required>
-					</div>
-					<button type="submit">Получить информацию</button>
-				</form>
-			</div>
-		</body>
-		</html>
-	`, styles)
-}
-
 func generateHTMLPage(info map[string]interface{}) string {
 	if info == nil {
 		return "<h1>Ошибка: данные не найдены</h1>"
@@ -328,13 +164,13 @@ func generateHTMLPage(info map[string]interface{}) string {
 			<meta charset="UTF-8">
 			<meta name="viewport" content="width=device-width, initial-scale=1.0">
 			<title>Discord Server Information</title>
-			<style>%s</style>
+			<link rel="stylesheet" href="/styles.css">
 		</head>
 		<body>
 			<div class="container">
 				<h1>Полученная информация от Discord</h1>
 				<table class="info-table">
-	`, styles))
+	`))
 
 	for key, value := range filteredInfo {
 		sb.WriteString("<tr><td>")
@@ -375,10 +211,6 @@ func generateHTMLPage(info map[string]interface{}) string {
 	return sb.String()
 }
 
-func indexHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprint(w, getIndexTemplate())
-}
-
 func getInfoHandler(w http.ResponseWriter, r *http.Request) {
 	token := r.FormValue("token")
 	lookupType := r.FormValue("lookupType")
@@ -401,7 +233,10 @@ func getInfoHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func startWebServer() {
-	http.HandleFunc("/", indexHandler)
+
+	staticFS, _ := fs.Sub(staticFiles, "static")
+	http.Handle("/styles.css", http.FileServer(http.Dir("./static")))
+	http.Handle("/", http.FileServer(http.FS(staticFS)))
 	http.HandleFunc("/getInfo", getInfoHandler)
 
 	go func() {
