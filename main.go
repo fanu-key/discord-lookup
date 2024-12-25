@@ -136,9 +136,9 @@ func generateFlagsHTML(flagValue int) string {
 		parts := strings.Split(flag, "|")
 		if len(parts) == 3 {
 			sb.WriteString(fmt.Sprintf(`
-				<li style="margin-bottom: 8px;">
-					<span style="margin-right: 8px;">%s</span>
-					<span style="font-weight: bold;">%s</span>
+				<li class="flag-item">
+					<span class="flag-icon">%s</span>
+					<span class="flag-description">%s</span>
 				</li>
 			`, strings.TrimSpace(parts[0]), strings.TrimSpace(parts[1])))
 		}
